@@ -12,17 +12,7 @@ import (
 func main() {
 	var thread_nubmer int
 
-	var data []string = read_file("data.txt")
-	var timeArray []time.Duration
-	for _, line := range data {
-		if len(line) > 1 {
-			line = strings.ReplaceAll(line, "\x0d", "")
-			line = strings.ReplaceAll(line, " ", "")
-			var time_el, _ = time.ParseDuration(line)
-			timeArray = append(timeArray, time_el)
-		}
-	}
-
+	var timeArray []time.Duration = timeArrayFromFile("data.txt")
 	var wg sync.WaitGroup
 
 	buffer := make(chan time.Duration, len(timeArray))
@@ -57,13 +47,23 @@ func main() {
 
 }
 
-func read_file(path string) []string {
+func timeArrayFromFile(path string) []time.Duration {
+	var timeArray []time.Duration
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println("File reading error", err)
 	}
 	split_data := strings.Split(string(data), "\n")
-	return split_data
+
+	for _, line := range split_data {
+		if len(line) > 1 {
+			line = strings.ReplaceAll(line, "\x0d", "")
+			line = strings.ReplaceAll(line, " ", "")
+			var time_el, _ = time.ParseDuration(line)
+			timeArray = append(timeArray, time_el)
+		}
+	}
+	return timeArray
 }
 
 func workFunc(sleepTime time.Duration) {

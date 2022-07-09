@@ -2,25 +2,42 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 func main() {
 
 	client := http.Client{}
 
-	resp, err := client.Get("http://localhost/1")
-	if err != nil {
-		log.Fatal(err)
+	//var timeArray []time.Duration
+
+	// resp, err := client.Get("http://localhost/1")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// buf, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// fmt.Println(string(buf))
+
+	for i := 0; i < 2; i++ {
+		cPost(client, "async")
 	}
+	cPost(client, "sync")
 
-	buf, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
+}
+
+func cPost(client http.Client, qType string) {
+	var _, errPost = client.PostForm("http://localhost/add", url.Values{"time": {"0h0m5s"}, "type": {qType}})
+
+	if errPost != nil {
+		log.Fatal(errPost)
 	}
-
-	fmt.Println(string(buf))
-
+	//fmt.Println("respPost", respPost)
+	fmt.Println("Query type: ", qType)
 }
