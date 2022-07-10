@@ -15,15 +15,15 @@ func main() {
 			line = strings.ReplaceAll(line, "\x0d", "")
 			line = strings.ReplaceAll(line, " ", "")
 			var time_el, _ = time.ParseDuration(line)
-			//fmt.Println(time_el, "  ", err)
 			timeArray = append(timeArray, time_el)
 		}
 	}
 	fmt.Println(timeArray)
 	fmt.Println("Приступаю к выполнению задач")
 	for _, sleepTime := range timeArray {
-		workFunc(sleepTime)
+		go workFunc(sleepTime)
 	}
+	fmt.Scanln()
 	fmt.Println("Окончил выполнять задачи")
 }
 

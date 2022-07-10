@@ -1,6 +1,0 @@
-syntax = "proto2";
-
-message Cities
-{
-    repeated string city = 1;
-}

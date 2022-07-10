@@ -1,6 +1,0 @@
-syntax = "proto2";
-
-message Names
-{
-    repeated string name = 1;
-}

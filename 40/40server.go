@@ -19,32 +19,57 @@ var count int
 var wg sync.WaitGroup
 
 var (
-	lock sync.Mutex
-	//taskQueue map[int]Task
-	taskQueue chan Task = make(chan Task)
-	//taskQueue chan time.Duration = make(chan time.Duration)*sync.Mutex
+//lock sync.Mutex
+//taskQueue map[Task]*sync.Mutex
+//taskQueue chan time.Duration = make(chan time.Duration)*sync.Mutex
 )
-var ex chan bool = make(chan bool)
 
 func main() {
-	//var taskQueue chan Task = make(chan Task)
+	var taskQueue chan Task = make(chan Task, 1000000)
 
-	// wg.Add(1)
-	// go func() {
-	// 	for {
-	// 		lock.Lock()
-	// 		val, ok := <-taskQueue
-	// 		if !ok {
-	// 			fmt.Println("break")
-	// 			break
-	// 		}
-	// 		fmt.Println("1 Sleep for ", val, " taskQueue ", len(taskQueue))
-	// 		time.Sleep(val)
-	// 		fmt.Println("!!! Sleep done")
-	// 		lock.Unlock()
-	// 	}
-	// 	wg.Done()
-	// }()
+	wg.Add(1)
+	go func() {
+		for {
+			//lock.Lock()
+			val, ok := <-taskQueue
+			if !ok {
+				fmt.Println("break")
+				break
+			}
+			fmt.Println("1 Sleep for ", val, " taskQueue ", len(taskQueue))
+			time.Sleep(val)
+			fmt.Println("!!! Sleep done")
+			//lock.Unlock()
+		}
+		wg.Done()
+	}()
+
+	//http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, "Hello World!") })
+	http.HandleFunc("/1", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "%s %s %s\n", r.Method, r.URL, r.Proto)
+		for k, v := range r.Header {
+			fmt.Fprintf(w, "Header[%q] = %q\n", k, v)
+		}
+		fmt.Fprintf(w, "Host = %q\n", r.Host)
+		fmt.Fprintf(w, "RemoteAddr = %q\n", r.RemoteAddr)
+		if err := r.ParseForm(); err != nil {
+			log.Print(err)
+		}
+		for k, v := range r.Form {
+			fmt.Fprintf(w, "Form[%q] = %q\n", k, v)
+		}
+	})
+	http.HandleFunc("/co", func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		fmt.Fprintf(w, "Count %d\n", count)
+		mu.Unlock()
+	})
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		count++
+		mu.Unlock()
+		fmt.Fprintf(w, "URL.Path = %q\n", r.URL.Path)
+	})
 
 	http.HandleFunc("/schedule", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
@@ -78,15 +103,17 @@ func main() {
 			//fmt.Fprintf(w, "Отображение выбранной задачи с queryType %d...", queryType)
 			w.WriteHeader(200)
 			fmt.Println("WriteHeader")
+			wg.Add(1)
 			go func() {
-				taskQueue <- task
+				taskQueue <- task.taskTime
+
+				wg.Done()
 			}()
-			handq(taskQueue)
 		} else {
 			//mu.Lock()
-			taskQueue <- task
-			handq(taskQueue)
-			<-taskQueue
+			taskQueue <- task.taskTime
+			//mu.Unlock()
+			//wg.Wait()
 			w.WriteHeader(200)
 		}
 	})
@@ -96,16 +123,4 @@ func main() {
 		log.Fatal("ListenAndServe: ", err)
 	}
 
-}
-func handq(taskQueue chan Task) {
-	lock.Lock()
-	var ta Task
-	for r := range taskQueue {
-		fmt.Println("1 Sleep for ", r, " taskQueue ", len(taskQueue))
-		time.Sleep(r.taskTime)
-		ta = r
-		fmt.Println("!!! Sleep done")
-	}
-	lock.Unlock()
-	taskQueue <- ta
 }

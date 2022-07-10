@@ -44,7 +44,6 @@ func main() {
 	}
 
 	wg.Wait()
-
 }
 
 func timeArrayFromFile(path string) []time.Duration {
