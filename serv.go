@@ -19,27 +19,40 @@ var count int
 var wg sync.WaitGroup
 
 var (
-//lock sync.Mutex
-//taskQueue map[Task]*sync.Mutex
-//taskQueue chan time.Duration = make(chan time.Duration)*sync.Mutex
+	SessionsMapMutex sync.Mutex
+	SessionsMap      map[string]*sync.Mutex
+)
+
+func RequestWorker(session_id string) {
+	var mutex *Mutex
+	var ok bool
+	SessionsMapMutex.Lock()
+	if mutex, ok = SessionsMap[session_id]; !ok {
+		mutex = &Mutex{}
+		SessionsMap[session_id] = mutex
+	}
+	SessionsMapMutex.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
+}
+
+var (
+	lock      sync.Mutex
+	taskQueue map[int]Task
+	//taskQueue chan time.Duration = make(chan time.Duration)*sync.Mutex
 )
 
 func main() {
-	var taskQueue chan time.Duration = make(chan time.Duration, 1000000)
 
 	wg.Add(1)
 	go func() {
 		for {
-			//lock.Lock()
-			val, ok := <-taskQueue
-			if !ok {
-				fmt.Println("break")
-				break
-			}
-			fmt.Println("1 Sleep for ", val, " taskQueue ", len(taskQueue))
-			time.Sleep(val)
+			lock.Lock()
+			task
+			fmt.Println("1 Sleep for ", taskQueue, " taskQueue ", len(taskQueue))
+			time.Sleep(taskQueue)
 			fmt.Println("!!! Sleep done")
-			//lock.Unlock()
+			lock.Unlock()
 		}
 		wg.Done()
 	}()
@@ -83,7 +96,6 @@ func main() {
 		}
 
 	})
-
 	http.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" || r.Method == "PUT" || r.Method == "DELETE" {
 			fmt.Fprintf(w, "Sorry, only POST methods this link are supported.")
@@ -103,15 +115,11 @@ func main() {
 			//fmt.Fprintf(w, "Отображение выбранной задачи с queryType %d...", queryType)
 			w.WriteHeader(200)
 			fmt.Println("WriteHeader")
-			wg.Add(1)
-			go func() {
-				taskQueue <- task.taskTime
-
-				wg.Done()
-			}()
+			taskQueue[len(taskQueue)] = task
+			go func() { taskQueue <- queryTime }()
 		} else {
 			//mu.Lock()
-			taskQueue <- task.taskTime
+			taskQueue <- queryTime
 			//mu.Unlock()
 			//wg.Wait()
 			w.WriteHeader(200)

@@ -33,7 +33,7 @@ func main() {
 }
 
 func cPost(client http.Client, qType string) {
-	var _, errPost = client.PostForm("http://localhost/add", url.Values{"time": {"0h0m5s"}, "type": {qType}})
+	var _, errPost = client.PostForm("http://localhost/add", url.Values{"time": {"0h0m10s"}, "type": {qType}})
 
 	if errPost != nil {
 		log.Fatal(errPost)
